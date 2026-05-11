@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f1923">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ProxyStock Cockpit">
+<title>ProxyStock — Cockpit Appel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1923;
+  --bg2: #161f2b;
+  --bg3: #1d2836;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --green: #00e5a0;
+  --green-dim: rgba(0,229,160,0.12);
+  --blue: #3d9cf5;
+  --blue-dim: rgba(61,156,245,0.12);
+  --amber: #f5a623;
+  --amber-dim: rgba(245,166,35,0.12);
+  --red: #ff5b5b;
+  --red-dim: rgba(255,91,91,0.1);
+  --text: #e8edf3;
+  --text2: #7a8fa8;
+  --text3: #4a5f76;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; overflow-x: hidden; }
+
+/* HEADER */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.logo span { color: var(--text2); font-weight: 400; }
+.caller-wrap { display: flex; align-items: center; gap: 8px; }
+.caller-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.caller-dot.idle { background: var(--text3); animation: none; }
+.caller-input {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  padding: 6px 12px;
+  width: 160px;
+  outline: none;
+}
+.caller-input::placeholder { color: var(--text3); }
+.caller-input:focus { border-color: var(--green); }
+.btn-reset-top {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-reset-top:hover { background: var(--bg3); color: var(--text); }
+
+/* PROGRESS */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.prog-step {
+  flex: 1;
+  min-width: 70px;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.prog-step.done { color: var(--green); border-bottom-color: var(--green); opacity: 0.6; }
+.prog-step.active { color: var(--green); border-bottom-color: var(--green); opacity: 1; }
+
+/* MAIN */
+.main { padding: 16px; max-width: 680px; margin: 0 auto; }
+
+/* STEP CARD */
+.step-card { display: none; animation: fadeIn 0.2s ease; }
+.step-card.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+.step-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.step-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--green);
+  background: var(--green-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.step-title { font-size: 20px; font-weight: 800; color: var(--text); }
+
+/* SAY BLOCK */
+.say {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 10px;
+  position: relative;
+}
+.say-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 8px;
+  margin-top: 14px;
+}
+.say-alt {
+  border-left-color: var(--blue);
+  display: none;
+}
+.say-alt.visible { display: block; }
+.tip {
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,0.2);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--amber);
+  margin: 8px 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.tip::before { content: '!'; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+
+/* SIZE GRID */
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.size-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.size-btn:hover { border-color: var(--border2); background: var(--bg2); }
+.size-btn.selected { border-color: var(--green); background: var(--green-dim); }
+.size-btn .sz-label { font-size: 15px; font-weight: 800; color: var(--text); }
+.size-btn .sz-price { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); margin-top: 2px; }
+.size-btn .sz-promo { font-size: 10px; color: var(--green); font-weight: 600; margin-top: 3px; }
+.size-btn .sz-note { font-size: 9px; color: var(--text3); margin-top: 3px; }
+.size-btn.selected .sz-label { color: var(--green); }
+.size-btn.selected .sz-price { color: var(--green); opacity: 0.7; }
+
+/* PRICE BOX */
+.price-result {
+  background: var(--green-dim);
+  border: 1px solid rgba(0,229,160,0.25);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin: 12px 0;
+  display: none;
+}
+.price-result.visible { display: block; }
+.price-result-main { font-size: 22px; font-weight: 800; color: var(--green); }
+.price-result-sub { font-size: 13px; color: rgba(0,229,160,0.7); margin-top: 4px; line-height: 1.5; }
+
+/* OBJ GRID */
+.obj-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.obj-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.obj-btn:hover { border-color: var(--border2); color: var(--text); }
+.obj-btn.selected { border-color: var(--blue); background: var(--blue-dim); color: var(--text); }
+.obj-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.tag-email { background: rgba(61,156,245,0.15); color: var(--blue); }
+.tag-visit { background: rgba(245,166,35,0.15); color: var(--amber); }
+.tag-timing { background: rgba(0,229,160,0.12); color: var(--green); }
+
+.obj-response {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  margin-top: 10px;
+  display: none;
+}
+.obj-response.visible { display: block; animation: fadeIn 0.2s ease; }
+.obj-action {
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,0.2);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--amber);
+  margin-top: 8px;
+  display: none;
+}
+.obj-action.visible { display: flex; gap: 8px; align-items: flex-start; }
+.obj-action::before { content: '→'; font-weight: 800; flex-shrink: 0; }
+
+/* NAV */
+.nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.btn-next {
+  background: var(--green);
+  color: #0f1923;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+}
+.btn-next:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-next:active { transform: scale(0.98); }
+.btn-prev {
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-prev:hover { background: var(--bg3); color: var(--text); }
+
+/* DONE */
+.done-screen {
+  text-align: center;
+  padding: 3rem 1rem;
+  display: none;
+}
+.done-screen.visible { display: block; animation: fadeIn 0.3s ease; }
+.done-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  border: 2px solid var(--green);
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.done-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.done-sub { font-size: 14px; color: var(--text2); margin-bottom: 2rem; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* MODE SELECTION */
+.mode-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.mode-card:hover { border-color: var(--green); transform: translateY(-2px); }
+.mode-icon { font-size: 32px; margin-bottom: 10px; }
+.mode-label { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.mode-sub { font-size: 12px; color: var(--text2); }
+
+/* CONTEXT BTNS */
+.ctx-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ctx-btn:hover { border-color: var(--border2); color: var(--text); }
+.ctx-btn.selected { border-color: var(--blue); background: var(--blue-dim); color: var(--text); }
+
+/* MODE BADGE in header */
+.mode-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: none;
+}
+.mode-badge.in  { background: var(--green-dim); color: var(--green); }
+.mode-badge.out { background: var(--blue-dim);  color: var(--blue);  }
+.mode-badge.visible { display: inline-block; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="logo">ProxyStock <span>Cockpit</span></div>
+    <span class="mode-badge" id="modeBadge"></span>
+  </div>
+  <div class="caller-wrap">
+    <div class="caller-dot idle" id="callerDot"></div>
+    <input class="caller-input" id="callerName" placeholder="Nom du client..." oninput="updateName()">
+    <button class="btn-reset-top" onclick="resetAll()">↺ Nouveau</button>
+  </div>
+</div>
+
+<div class="progress-wrap" id="progressWrap"></div>
+
+<div class="main">
+
+  <!-- MODE SELECTION -->
+  <div id="modeScreen">
+    <div style="padding: 2rem 0 1rem;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Type d'appel</div>
+      <div style="font-size:26px;font-weight:800;color:var(--text);margin-bottom:2rem;">Quel appel ?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:2rem;">
+        <div class="mode-card" onclick="selectMode('inbound')">
+          <div class="mode-icon">📲</div>
+          <div class="mode-label">Appel entrant</div>
+          <div class="mode-sub">Le client appelle</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('outbound')">
+          <div class="mode-icon">📞</div>
+          <div class="mode-label">Appel sortant</div>
+          <div class="mode-sub">Tu rappelles</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTBOUND CONTEXT (step -1 for outbound) -->
+  <div class="step-card" id="stepOut" style="display:none;">
+    <div class="step-header">
+      <span class="step-num" style="background:rgba(61,156,245,0.15);color:var(--blue);">OUT</span>
+      <span class="step-title">Contexte du rappel</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Pourquoi tu rappelles ?</div>
+    <div style="display:grid;gap:8px;margin-bottom:16px;">
+      <div class="ctx-btn" onclick="selectCtx(this,'missed')">"Appel manqué hors horaires"</div>
+      <div class="ctx-btn" onclick="selectCtx(this,'marketplace')">"Contact via Marketplace / site"</div>
+      <div class="ctx-btn" onclick="selectCtx(this,'prereserv')">"Pré-réservation sans confirmation"</div>
+      <div class="ctx-btn" onclick="selectCtx(this,'relance')">"Relance prospect (pas de nouvelles)"</div>
+      <div class="ctx-btn" onclick="selectCtx(this,'promo')">"Annonce d'une promo"</div>
+    </div>
+    <div class="obj-response" id="ctx-missed" style="border-left-color:var(--blue);">"Bonjour, David de ProxyStock Ans-Liège — vous nous avez appelés hier en dehors de nos heures d'ouverture. Je vous rappelle comme promis ! Est-ce que je tombe au bon moment ?"</div>
+    <div class="obj-response" id="ctx-marketplace" style="border-left-color:var(--blue);">"Bonjour, David de ProxyStock Ans-Liège — vous avez marqué un intérêt pour nos boxes de stockage via Marketplace. Je vous contacte pour voir si je peux vous aider. Est-ce que je tombe au bon moment ?"</div>
+    <div class="obj-response" id="ctx-prereserv" style="border-left-color:var(--blue);">"Bonjour <span class='cname'>Madame/Monsieur</span>, David de ProxyStock Ans-Liège. Vous avez visité notre site et un box vous a été pré-réservé — je voulais simplement m'assurer que vous aviez toutes les infos et voir si je pouvais vous aider à finaliser."</div>
+    <div class="obj-response" id="ctx-relance" style="border-left-color:var(--blue);">"Bonjour <span class='cname'>Madame/Monsieur</span>, David de ProxyStock Ans-Liège. Vous nous aviez contactés il y a quelques jours concernant nos boxes — je voulais prendre de vos nouvelles et voir si votre projet avançait ?"</div>
+    <div class="obj-response" id="ctx-promo" style="border-left-color:var(--blue);">"Bonjour <span class='cname'>Madame/Monsieur</span>, David de ProxyStock Ans-Liège. Je vous contacte car on a une promo en ce moment — 50% sur les 2 premiers mois — et je pensais que ça pourrait vous intéresser. Je tombe au bon moment ?"</div>
+    <div class="tip" style="margin-top:12px;">Toujours demander "Je tombe au bon moment ?" — ça respecte le client et crée une dynamique positive.</div>
+    <div class="nav">
+      <button class="btn-prev" onclick="backToMode()">← Mode</button>
+      <button class="btn-next" onclick="goTo(0)">Qualifier le besoin →</button>
+    </div>
+  </div>
+
+  <!-- STEP 0 : ACCROCHE -->
+  <div class="step-card active" id="step0">
+    <div class="step-header">
+      <span class="step-num">01/07</span>
+      <span class="step-title">Décrocher avec impact</span>
+    </div>
+    <div class="say">"ProxyStock Ans-Liège, David à l'appareil, bonjour !"</div>
+    <div class="tip">Ne jamais répondre "Allô ?" — première impression cruciale.</div>
+    <div class="say-label">Si silence ou hésitation</div>
+    <div class="say">"Je vous écoute, qu'est-ce que je peux faire pour vous ?"</div>
+    <div class="nav">
+      <button class="btn-next" onclick="goTo(1)">Le client parle →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1 : QUALIFICATION -->
+  <div class="step-card" id="step1">
+    <div class="step-header">
+      <span class="step-num">02/07</span>
+      <span class="step-title">Qualifier le besoin</span>
+    </div>
+    <div class="say">"Je suis David — et vous êtes <span class="cname">Monsieur/Madame</span>... ?"</div>
+    <div class="say-label">Questions à enchaîner naturellement</div>
+    <div class="say">"Qu'est-ce que vous souhaitez stocker — des meubles, des cartons, du matériel ?"</div>
+    <div class="say">"Et à partir de quand en avez-vous besoin ?"</div>
+    <div class="say">"C'est pour combien de temps, à priori ?"</div>
+    <div class="tip">Notez le nom dès maintenant — ça personnalise tout l'échange.</div>
+    <div class="nav">
+      <button class="btn-prev" onclick="goTo(0)">← Retour</button>
+      <button class="btn-next" onclick="goTo(2)">Besoin qualifié →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 : TAILLE -->
+  <div class="step-card" id="step2">
+    <div class="step-header">
+      <span class="step-num">03/07</span>
+      <span class="step-title">Estimer la taille</span>
+    </div>
+    <div class="say">"Listez-moi vos meubles principaux — je fais le calcul avec vous pour trouver la bonne taille du premier coup."</div>
+    <div class="say">"Nos boxes font 3m de haut : vous travaillez en hauteur, moins de surface au sol, ça coûte moins cher."</div>
+    <div class="say-label">Sélectionnez la taille recommandée</div>
+    <div class="size-grid" id="sizeGrid"></div>
+    <div class="price-result" id="priceResult">
+      <div class="price-result-main" id="priceMain"></div>
+      <div class="price-result-sub" id="priceSub"></div>
+    </div>
+    <div class="nav">
+      <button class="btn-prev" onclick="goTo(1)">← Retour</button>
+      <button class="btn-next" onclick="goTo(3)">Présenter le prix →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 : PRIX -->
+  <div class="step-card" id="step3">
+    <div class="step-header">
+      <span class="step-num">04/07</span>
+      <span class="step-title">Annoncer le prix</span>
+    </div>
+    <div class="tip">Toujours : promo d'abord, prix plein ensuite.</div>
+    <div class="say" id="promoSay">"Bonne nouvelle — on a une promo en ce moment : les 2 premiers mois à moitié prix si vous restez minimum 3 mois."</div>
+    <div class="say" id="priceSay2" style="display:none"></div>
+    <div class="say" id="noPromoSay" style="display:none"></div>
+    <div class="say-label">Toujours ajouter</div>
+    <div class="say">"Et c'est tout compris : pas de frais admin, pas d'assurance à payer, cadenas fourni. Juste un mois de caution — restitué quand vous partez."</div>
+    <div class="nav">
+      <button class="btn-prev" onclick="goTo(2)">← Retour</button>
+      <button class="btn-next" onclick="goTo(4)">Gérer les objections →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 : OBJECTIONS -->
+  <div class="step-card" id="step4">
+    <div class="step-header">
+      <span class="step-num">05/07</span>
+      <span class="step-title">Gérer les objections</span>
+    </div>
+    <div class="obj-grid">
+      <button class="obj-btn" onclick="showObj(this,'obj-price')">"C'est trop cher"</button>
+      <button class="obj-btn" onclick="showObj(this,'obj-visit')">"Je peux le visiter ?" <span class="obj-tag tag-visit">visite</span></button>
+      <button class="obj-btn" onclick="showObj(this,'obj-email')">"Par email d'abord" <span class="obj-tag tag-email">email</span></button>
+      <button class="obj-btn" onclick="showObj(this,'obj-timing')">"Je sais pas encore quand" <span class="obj-tag tag-timing">timing</span></button>
+      <button class="obj-btn" onclick="showObj(this,'obj-demenageur')">"Pas encore de déménageur" <span class="obj-tag tag-timing">timing</span></button>
+      <button class="obj-btn" onclick="showObj(this,'obj-think')">"Je dois réfléchir"</button>
+      <button class="obj-btn" onclick="showObj(this,'obj-someone')">"J'en parle à quelqu'un"</button>
+      <button class="obj-btn" onclick="showObj(this,'obj-small')">"C'est peut-être trop grand"</button>
+      <button class="obj-btn" onclick="showObj(this,'obj-site')">"Je regarde le site"</button>
+    </div>
+
+    <div class="obj-response" id="obj-price">"Je comprends. Mais comparé à la concurrence où vous ajoutez assurance, frais d'entrée et cadenas... chez nous c'est tout inclus. Et avec la promo, vous démarrez à <span id="promoP">—</span> €/mois. Difficile de faire moins cher dans la région."</div>
+
+    <div class="obj-response" id="obj-visit">"Bien sûr, c'est une question normale ! Notre site fonctionne sans personnel sur place — c'est ce qui nous permet d'être moins chers. Mais pour vous donner une bonne idée, je peux vous envoyer des photos et une vidéo du box. Et si vous souhaitez vraiment passer voir, on convient d'un rendez-vous — je me déplace pour vous."</div>
+    <div class="obj-action" id="obj-visit-action">Proposer photos/vidéo par WhatsApp ou email. Si besoin : fixer un RDV sur place.</div>
+
+    <div class="obj-response" id="obj-email">"Pas de problème, je vous envoie ça de suite — donnez-moi votre adresse email. Vous recevrez les tailles disponibles, les prix et le lien direct pour réserver. Je vous rappelle dans 24h si vous avez des questions."</div>
+    <div class="obj-action" id="obj-email-action">Noter l'adresse email. Envoyer dans les 10 min. Programmer rappel J+1.</div>
+
+    <div class="obj-response" id="obj-timing">"Pas de souci — vous pouvez réserver jusqu'à 30 jours à l'avance, sans risque : si vous changez d'avis avant d'emménager, c'est gratuit et je vous rembourse intégralement. Votre box est sécurisé dès que vous êtes prêt."</div>
+
+    <div class="obj-response" id="obj-demenageur">"Aucun problème — le box sera là quand vous en aurez besoin. Réservez maintenant avec une date indicative, et si votre déménageur décale, vous ajustez ou annulez gratuitement. Vous ne prenez aucun risque."</div>
+
+    <div class="obj-response" id="obj-think">"Bien sûr. Ce que je vous suggère : réservez maintenant sur proxystock.be — c'est gratuit jusqu'à 30 jours avant l'emménagement. Si vous changez d'avis, je vous rembourse intégralement. Votre box est sécurisé pendant que vous réfléchissez."</div>
+
+    <div class="obj-response" id="obj-someone">"Pas de souci ! En attendant, réservez sur proxystock.be — vous avez 30 jours pour annuler gratuitement. Comme ça, si vous décidez d'y aller, le box est garanti."</div>
+
+    <div class="obj-response" id="obj-small">"On peut descendre d'une taille — mais avec 3m de haut, vous serez surpris de ce qu'on peut caser. Je vous conseille quand même <span id="recS">ce box</span> pour être à l'aise."</div>
+
+    <div class="obj-response" id="obj-site">"Parfait. Vous verrez les boxes disponibles directement. Si vous avez la moindre question en naviguant, rappelez-moi — ou je vous rappelle moi-même demain si vous préférez ?"</div>
+
+    <div class="nav">
+      <button class="btn-prev" onclick="goTo(3)">← Retour</button>
+      <button class="btn-next" onclick="goTo(5)">Expliquer le process →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 : PROCESS -->
+  <div class="step-card" id="step5">
+    <div class="step-header">
+      <span class="step-num">06/07</span>
+      <span class="step-title">Rassurer sur la simplicité</span>
+    </div>
+    <div class="say">"Tout est 100% digital : proxystock.be, vous choisissez votre taille et votre date, vous payez et signez en ligne. En 2 minutes, votre box est réservé."</div>
+    <div class="say">"Vous recevez un SMS avec l'appli d'accès — pas besoin de clé, pas besoin de passer au bureau."</div>
+    <div class="say">"Vous pouvez réserver jusqu'à 30 jours à l'avance. Et si vous annulez avant d'emménager, c'est gratuit — je vous rembourse sans question."</div>
+    <div class="nav">
+      <button class="btn-prev" onclick="goTo(4)">← Retour</button>
+      <button class="btn-next" onclick="goTo(6)">Closer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 6 : CLOSING -->
+  <div class="step-card" id="step6">
+    <div class="step-header">
+      <span class="step-num">07/07</span>
+      <span class="step-title">Closer avec un next step</span>
+    </div>
+    <div class="say-label">Si le client est chaud</div>
+    <div class="say">"Vous voulez qu'on fasse ça ensemble maintenant ? Je vous guide sur le site, ça prend 2 minutes."</div>
+    <div class="say-label">Si le client hésite encore</div>
+    <div class="say">"Je vous rappelle demain en fin de matinée pour voir si vous avez des questions — ça vous convient ?"</div>
+    <div class="say-label">Si email demandé</div>
+    <div class="say">"Je vous envoie ça dans les minutes qui suivent. À très vite <span class="cname">Madame/Monsieur</span> !"</div>
+    <div class="say-label">Congé standard</div>
+    <div class="say">"Merci <span class="cname">Madame/Monsieur</span>, belle journée à vous. N'hésitez pas, je reste disponible !"</div>
+    <div class="nav">
+      <button class="btn-prev" onclick="goTo(5)">← Retour</button>
+      <button class="btn-next" onclick="finish()" style="background:var(--green)">Appel terminé ✓</button>
+    </div>
+  </div>
+
+  <!-- DONE -->
+  <div class="done-screen" id="doneScreen">
+    <div class="done-circle">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00e5a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="done-title" id="doneTitle">Appel terminé</div>
+    <div class="done-sub" id="doneSub">Bon appel !</div>
+    <button class="btn-next" style="max-width:220px;margin:0 auto" onclick="resetAll()">↺ Nouvel appel</button>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+let callMode = null; // 'inbound' or 'outbound'
+let outboundContext = null;
+const STEPS_LABELS_IN  = ['Accroche','Qualifier','Taille','Prix','Objections','Process','Closer'];
+const STEPS_LABELS_OUT = ['Contexte','Accroche','Qualifier','Taille','Prix','Objections','Process','Closer'];
+let STEPS_LABELS = STEPS_LABELS_IN;
+let TOTAL = 7;
+let current = 0;
+
+const SIZES = [
+  {label:'1 m²',   full:36.25, promo:null,  note:'Dernier box'},
+  {label:'1,5 m²', full:39,    promo:null,  note:''},
+  {label:'2 m²',   full:54.05, promo:null,  note:''},
+  {label:'2,5 m²', full:58,    promo:null,  note:''},
+  {label:'3 m²',   full:66,    promo:null,  note:''},
+  {label:'4 m²',   full:83,    promo:null,  note:'Dernière unité'},
+  {label:'5 m²',   full:104,   promo:52,    note:'Studio / 20–30 cartons'},
+  {label:'6 m²',   full:119,   promo:59.5,  note:''},
+  {label:'7 m²',   full:139,   promo:69.5,  note:'Appart 1 chambre'},
+  {label:'8 m²',   full:155,   promo:77.5,  note:'Appart 2 chambres'},
+  {label:'9 m²',   full:172,   promo:86,    note:'Accès rez-de-chaussée'},
+  {label:'10 m²',  full:189,   promo:94.5,  note:'Stock professionnel'},
+];
+
+let selectedIdx = null;
+
+function selectMode(mode) {
+  callMode = mode;
+  document.getElementById('modeScreen').style.display = 'none';
+  document.getElementById('progressWrap').style.display = '';
+  const badge = document.getElementById('modeBadge');
+  if (mode === 'inbound') {
+    STEPS_LABELS = STEPS_LABELS_IN;
+    TOTAL = 7;
+    badge.textContent = '📲 Entrant';
+    badge.className = 'mode-badge in visible';
+    document.getElementById('callerDot').classList.remove('idle');
+    goTo(0);
+  } else {
+    STEPS_LABELS = STEPS_LABELS_OUT;
+    TOTAL = 8;
+    badge.textContent = '📞 Sortant';
+    badge.className = 'mode-badge out visible';
+    showOutbound();
+  }
+}
+
+function showOutbound() {
+  document.getElementById('stepOut').style.display = 'block';
+  document.getElementById('stepOut').classList.add('active');
+  for (let i = 0; i < 8; i++) {
+    const el = document.getElementById('step' + i);
+    if (el) { el.classList.remove('active'); }
+  }
+  buildProgressOut();
+  window.scrollTo(0, 0);
+}
+
+function buildProgressOut() {
+  const wrap = document.getElementById('progressWrap');
+  wrap.innerHTML = '';
+  STEPS_LABELS_OUT.forEach((label, i) => {
+    const el = document.createElement('div');
+    const isActive = (i === 0);
+    el.className = 'prog-step' + (isActive ? ' active' : '');
+    el.textContent = label;
+    wrap.appendChild(el);
+  });
+}
+
+function selectCtx(btn, id) {
+  document.querySelectorAll('.ctx-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#stepOut .obj-response').forEach(r => r.classList.remove('visible'));
+  btn.classList.add('selected');
+  outboundContext = id;
+  document.getElementById('ctx-' + id).classList.add('visible');
+}
+
+function backToMode() {
+  callMode = null;
+  outboundContext = null;
+  current = 0;
+  document.getElementById('stepOut').style.display = 'none';
+  document.getElementById('stepOut').classList.remove('active');
+  document.getElementById('modeScreen').style.display = '';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('progressWrap').innerHTML = '';
+  document.getElementById('modeBadge').className = 'mode-badge';
+  document.getElementById('callerDot').classList.add('idle');
+  for (let i = 0; i < 8; i++) {
+    const el = document.getElementById('step' + i);
+    if (el) { el.classList.remove('active'); el.style.display = ''; }
+  }
+}
+function buildProgress() {
+  const wrap = document.getElementById('progressWrap');
+  wrap.innerHTML = '';
+  STEPS_LABELS.forEach((label, i) => {
+    const el = document.createElement('div');
+    const offset = (callMode === 'outbound') ? 1 : 0;
+    const stepIdx = i - offset;
+    const isDone   = callMode === 'outbound' ? (i > 0 && stepIdx < current) : (i < current);
+    const isActive = callMode === 'outbound' ? (i > 0 && stepIdx === current) : (i === current);
+    el.className = 'prog-step' + (isDone ? ' done' : isActive ? ' active' : '');
+    el.textContent = label;
+    if (callMode === 'inbound' || i > 0) el.onclick = () => goTo(Math.max(0, stepIdx));
+    wrap.appendChild(el);
+  });
+}
+
+function buildSizeGrid() {
+  const grid = document.getElementById('sizeGrid');
+  grid.innerHTML = '';
+  SIZES.forEach((s, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'size-btn';
+    btn.innerHTML =
+      '<div class="sz-label">' + s.label + '</div>' +
+      '<div class="sz-price">' + (s.promo ? '<s>' + s.full + '€</s>' : s.full + '€') + '</div>' +
+      (s.promo ? '<div class="sz-promo">-50% promo</div>' : '') +
+      (s.note ? '<div class="sz-note">' + s.note + '</div>' : '');
+    btn.onclick = () => selectSize(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectSize(i, btn) {
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedIdx = i;
+  const s = SIZES[i];
+  const box = document.getElementById('priceResult');
+  box.classList.add('visible');
+  document.getElementById('priceMain').textContent = s.label + ' — ' + s.full + ' €/mois';
+  let sub = '';
+  if (s.promo) {
+    const t3 = (s.promo * 2 + s.full).toFixed(2).replace('.', ',');
+    const saved = Math.round(s.full * 3 - parseFloat(t3.replace(',', '.')));
+    sub = 'Code PRINTEMPS50 — ' + s.promo + ' €/mois × 2 mois puis ' + s.full + ' €\nTotal 3 mois : ' + t3 + ' € — économie de ' + saved + ' €';
+    document.getElementById('promoSay').style.display = '';
+    document.getElementById('priceSay2').style.display = '';
+    document.getElementById('noPromoSay').style.display = 'none';
+    document.getElementById('priceSay2').textContent = '"Sur un ' + s.label + ', avec le code PRINTEMPS50, vous démarrez à ' + s.promo + '€/mois au lieu de ' + s.full + '€. Sur 3 mois, ça fait ' + t3 + '€ en tout — soit ' + saved + '€ d\'économie."';
+    document.getElementById('promoP').textContent = s.promo;
+  } else {
+    sub = 'Pas de promo sur cette taille — prix unique : ' + s.full + ' €/mois';
+    document.getElementById('promoSay').style.display = 'none';
+    document.getElementById('priceSay2').style.display = 'none';
+    document.getElementById('noPromoSay').style.display = '';
+    document.getElementById('noPromoSay').textContent = '"Le ' + s.label + ', c\'est ' + s.full + '€/mois, tout compris. Pas de frais cachés."';
+    document.getElementById('promoP').textContent = s.full;
+  }
+  document.getElementById('priceSub').textContent = sub;
+  document.getElementById('recS').textContent = s.label;
+}
+
+function goTo(n) {
+  // hide outbound context card if visible
+  const stepOut = document.getElementById('stepOut');
+  stepOut.classList.remove('active');
+  stepOut.style.display = 'none';
+  document.getElementById('doneScreen').classList.remove('visible');
+  for (let i = 0; i < 8; i++) {
+    const el = document.getElementById('step' + i);
+    if (el) { el.classList.remove('active'); el.style.display = ''; }
+  }
+  current = Math.max(0, Math.min(n, 6));
+  document.getElementById('step' + current).classList.add('active');
+  buildProgress();
+  window.scrollTo(0, 0);
+  document.getElementById('callerDot').classList.remove('idle');
+}
+
+function updateName() {
+  const n = document.getElementById('callerName').value.trim();
+  document.querySelectorAll('.cname').forEach(el => el.textContent = n || 'Madame/Monsieur');
+  const dot = document.getElementById('callerDot');
+  if (n) { dot.classList.remove('idle'); } else { dot.classList.add('idle'); }
+}
+
+function showObj(btn, id) {
+  document.querySelectorAll('.obj-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.obj-response, .obj-action').forEach(r => r.classList.remove('visible'));
+  btn.classList.add('selected');
+  document.getElementById(id).classList.add('visible');
+  const action = document.getElementById(id + '-action');
+  if (action) action.classList.add('visible');
+}
+
+function finish() {
+  for (let i = 0; i < TOTAL; i++) {
+    const el = document.getElementById('step' + i);
+    if (el) { el.classList.remove('active'); el.style.display = 'none'; }
+  }
+  const n = document.getElementById('callerName').value.trim();
+  document.getElementById('doneTitle').textContent = n ? 'Super appel avec ' + n + ' !' : 'Appel terminé';
+  document.getElementById('doneSub').textContent = n ? 'Pensez au suivi si nécessaire.' : 'Bon appel !';
+  document.getElementById('doneScreen').classList.add('visible');
+  document.getElementById('progressWrap').innerHTML = '';
+  document.getElementById('callerDot').classList.add('idle');
+  window.scrollTo(0, 0);
+}
+
+function resetAll() {
+  callMode = null;
+  outboundContext = null;
+  current = 0;
+  selectedIdx = null;
+  document.getElementById('callerName').value = '';
+  document.querySelectorAll('.cname').forEach(el => el.textContent = 'Madame/Monsieur');
+  document.querySelectorAll('.obj-btn, .ctx-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.obj-response, .obj-action').forEach(r => r.classList.remove('visible'));
+  document.querySelectorAll('#stepOut .obj-response').forEach(r => r.classList.remove('visible'));
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('priceResult').classList.remove('visible');
+  document.getElementById('priceSay2').textContent = '';
+  document.getElementById('doneScreen').classList.remove('visible');
+  document.getElementById('callerDot').classList.add('idle');
+  document.getElementById('modeBadge').className = 'mode-badge';
+  document.getElementById('stepOut').style.display = 'none';
+  document.getElementById('stepOut').classList.remove('active');
+  for (let i = 0; i < 8; i++) {
+    const el = document.getElementById('step' + i);
+    if (el) { el.style.display = ''; el.classList.remove('active'); }
+  }
+  // Show mode selection
+  document.getElementById('modeScreen').style.display = '';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('progressWrap').innerHTML = '';
+  window.scrollTo(0, 0);
+}
+
+buildSizeGrid();
+// Start on mode selection screen
+document.getElementById('progressWrap').style.display = 'none';
+document.getElementById('step0').classList.remove('active');
+</script>
+</body>
+</html>
